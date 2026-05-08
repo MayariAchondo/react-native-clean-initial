@@ -9,7 +9,7 @@ export default function TransactionsScreen() {
   const router = useRouter();
 
   function getCategoryName(categoryId: string) {
-    const category = categories.find((c: any) => c.id === categoryId);
+    const category = categories.find(c => c.id === categoryId);
     return category ? category.name : 'Sin categoría';
   }
 

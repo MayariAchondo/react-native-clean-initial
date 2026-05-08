@@ -11,7 +11,7 @@ export default function TransactionsScreen() {
   function getCategoryName(categoryId: string) {
     const category = categories.find((c: any) => c.id === categoryId);
     return category ? category.name : 'Sin categoría';
-  }
+}
 
   return (
     <View style={styles.container}>
