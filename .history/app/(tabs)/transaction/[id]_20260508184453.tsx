@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../../hooks/useCategories';
 import { useTransactionForm } from '../../../hooks/useTransactionForm';
 import { useTransactions } from '../../../hooks/useTransactions';
@@ -45,59 +45,52 @@ export default function TransactionFormScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.safe}
-      >
-        <View style={styles.container}>
-          <Text style={styles.title}>{isEditing ? 'Editar' : 'Nueva'} transacción</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Monto"
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="numeric"
-          />
-          {errors.amount ? <Text style={styles.error}>{errors.amount}</Text> : null}
-          <TextInput
-            style={styles.input}
-            placeholder="Descripción"
-            value={description}
-            onChangeText={setDescription}
-          />
-          {errors.description ? <Text style={styles.error}>{errors.description}</Text> : null}
-          <View style={styles.typeRow}>
-            <TouchableOpacity
-              style={type === 'income' ? styles.typeSelected : styles.typeOption}
-              onPress={() => setType('income')}
-            >
-              <Text>Ingreso</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={type === 'expense' ? styles.typeSelected : styles.typeOption}
-              onPress={() => setType('expense')}
-            >
-              <Text>Egreso</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.label}>Categoría:</Text>
-          {categories.map(cat => (
-            <TouchableOpacity
-              key={cat.id}
-              style={cat.id === categoryId ? styles.typeSelected : styles.typeOption}
-              onPress={() => setCategoryId(cat.id)}
-            >
-              <Text>{cat.name}</Text>
-            </TouchableOpacity>
-          ))}
-          {errors.categoryId ? <Text style={styles.error}>{errors.categoryId}</Text> : null}
-          <TouchableOpacity style={styles.button} onPress={handleSave}>
-            <Text style={styles.buttonText}>Guardar</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Text style={styles.title}>{isEditing ? 'Editar' : 'Nueva'} transacción</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Monto"
+        value={amount}
+        onChangeText={setAmount}
+        keyboardType="numeric"
+      />
+      {errors.amount ? <Text style={styles.error}>{errors.amount}</Text> : null}
+      <TextInput
+        style={styles.input}
+        placeholder="Descripción"
+        value={description}
+        onChangeText={setDescription}
+      />
+      {errors.description ? <Text style={styles.error}>{errors.description}</Text> : null}
+      <View style={styles.typeRow}>
+        <TouchableOpacity
+          style={type === 'income' ? styles.typeSelected : styles.typeOption}
+          onPress={() => setType('income')}
+        >
+          <Text>Ingreso</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={type === 'expense' ? styles.typeSelected : styles.typeOption}
+          onPress={() => setType('expense')}
+        >
+          <Text>Egreso</Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.label}>Categoría:</Text>
+      {categories.map(cat => (
+        <TouchableOpacity
+          key={cat.id}
+          style={cat.id === categoryId ? styles.typeSelected : styles.typeOption}
+          onPress={() => setCategoryId(cat.id)}
+        >
+          <Text>{cat.name}</Text>
+        </TouchableOpacity>
+      ))}
+      {errors.categoryId ? <Text style={styles.error}>{errors.categoryId}</Text> : null}
+      <TouchableOpacity style={styles.button} onPress={handleSave}>
+        <Text style={styles.buttonText}>Guardar</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -112,5 +105,4 @@ const styles = StyleSheet.create({
   typeSelected: { borderWidth: 1, borderColor: '#000', padding: 10, borderRadius: 6, backgroundColor: '#eee' },
   button: { backgroundColor: '#000', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 16 },
   buttonText: { color: '#fff', fontWeight: 'bold' },
-  safe: { flex: 1 },
 });

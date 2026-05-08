@@ -37,25 +37,3 @@ export default function LoginScreen() {
             style={styles.input}
             placeholder="Contraseña"
             value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Ingresar</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 40 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 12, borderRadius: 6 },
-  error: { color: 'red', marginBottom: 12 },
-  button: { backgroundColor: '#000', padding: 14, borderRadius: 6, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: 'bold' },
-});

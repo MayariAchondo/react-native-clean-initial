@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../../hooks/useCategories';
 import { useCategoryForm } from '../../../hooks/useCategoryForm';
 
@@ -32,26 +32,19 @@ export default function CategoryFormScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.safe}
-      >
-        <View style={styles.container}>
-          <Text style={styles.title}>{isEditing ? 'Editar' : 'Nueva'} categoría</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre"
-            value={name}
-            onChangeText={setName}
-          />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity style={styles.button} onPress={handleSave}>
-            <Text style={styles.buttonText}>Guardar</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Text style={styles.title}>{isEditing ? 'Editar' : 'Nueva'} categoría</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nombre"
+        value={name}
+        onChangeText={setName}
+      />
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <TouchableOpacity style={styles.button} onPress={handleSave}>
+        <Text style={styles.buttonText}>Guardar</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -62,5 +55,4 @@ const styles = StyleSheet.create({
   error: { color: 'red', marginBottom: 8 },
   button: { backgroundColor: '#000', padding: 14, borderRadius: 6, alignItems: 'center' },
   buttonText: { color: '#fff', fontWeight: 'bold' },
-  safe: { flex: 1 },
 });
