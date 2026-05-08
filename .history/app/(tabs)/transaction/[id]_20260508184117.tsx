@@ -17,7 +17,7 @@ export default function TransactionFormScreen() {
   useFocusEffect(
     useCallback(() => {
       loadCategories();
-    }, [])
+    }, [loadCategories])
   );
 
   useEffect(() => {

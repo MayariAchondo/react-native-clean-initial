@@ -1,24 +1,17 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useCategories } from '../../../hooks/useCategories';
 import { useTransactionForm } from '../../../hooks/useTransactionForm';
 import { useTransactions } from '../../../hooks/useTransactions';
-
 
 export default function TransactionFormScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isEditing = id !== 'new';
   const router = useRouter();
   const { transactions, addTransaction, updateTransaction } = useTransactions();
-  const { categories, loadCategories } = useCategories();
+  const { categories } = useCategories();
   const { amount, setAmount, type, setType, description, setDescription, categoryId, setCategoryId, errors, validate, reset } = useTransactionForm();
-
-  useFocusEffect(
-    useCallback(() => {
-      loadCategories();
-    }, [])
-  );
 
   useEffect(() => {
     if (isEditing) {
