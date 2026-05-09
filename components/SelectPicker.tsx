@@ -1,7 +1,14 @@
-// components/SelectPicker.tsx
 import { colors } from '@/constants/theme';
-import { Picker } from '@react-native-picker/picker';
-import { Platform, View } from 'react-native';
+import { useState } from 'react';
+import {
+  FlatList,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 interface Option {
   label: string;
@@ -21,6 +28,9 @@ export function SelectPicker({
   onChange,
   placeholder = 'Seleccionar...',
 }: Props) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.value === value);
+
   if (Platform.OS === 'web') {
     return (
       <div style={{ position: 'relative', marginBottom: 8 }}>
@@ -68,25 +78,95 @@ export function SelectPicker({
   }
 
   return (
-    <View
-      style={{
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 8,
-        backgroundColor: colors.surface,
-        marginBottom: 8,
-      }}
-    >
-      <Picker
-        selectedValue={value}
-        onValueChange={onChange}
-        style={{ color: colors.text }}
-      >
-        <Picker.Item label={placeholder} value="" />
-        {options.map((opt) => (
-          <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
-        ))}
-      </Picker>
-    </View>
+    <>
+      <TouchableOpacity style={styles.trigger} onPress={() => setOpen(true)}>
+        <Text style={[styles.triggerText, !value && styles.placeholder]}>
+          {selected ? selected.label : placeholder}
+        </Text>
+        <Text style={styles.arrow}>⌵</Text>
+      </TouchableOpacity>
+
+      <Modal visible={open} transparent animationType="slide">
+        <TouchableOpacity
+          style={styles.backdrop}
+          onPress={() => setOpen(false)}
+        />
+        <View style={styles.sheet}>
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>{placeholder}</Text>
+            <TouchableOpacity onPress={() => setOpen(false)}>
+              <Text style={styles.closeBtn}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={options}
+            keyExtractor={(item) => item.value}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.option,
+                  item.value === value && styles.optionSelected,
+                ]}
+                onPress={() => {
+                  onChange(item.value);
+                  setOpen(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    item.value === value && styles.optionTextSelected,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </Modal>
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  trigger: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    padding: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  triggerText: { fontSize: 16, color: colors.text },
+  placeholder: { color: colors.muted },
+  arrow: { fontSize: 16, color: colors.muted },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '50%',
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sheetTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
+  closeBtn: { fontSize: 16, color: colors.tint },
+  option: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  optionSelected: { backgroundColor: colors.tint + '20' },
+  optionText: { fontSize: 16, color: colors.text },
+  optionTextSelected: { color: colors.tint, fontWeight: '600' },
+});
