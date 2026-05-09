@@ -1,57 +1,103 @@
-import { useState } from 'react';
-import { z } from 'zod/v4';
+import type { Transaction } from '@/types/transaction';
+import { useEffect, useState } from 'react';
+import {
+  createTransactionSchema,
+  updateTransactionSchema,
+  type CreateTransactionInput,
+  type UpdateTransactionInput,
+} from '../schemas/transaction.schema';
 
-const transactionSchema = z.object({
-  amount: z.number().positive('El monto debe ser mayor a 0'),
-  type: z.enum(['income', 'expense']),
-  description: z.string().min(1, 'La descripción es obligatoria'),
-  categoryId: z.string().min(1, 'Debes seleccionar una categoría'),
-});
-
-export function useTransactionForm() {
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<'income' | 'expense'>('income');
-  const [description, setDescription] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  function validate() {
-    const result = transactionSchema.safeParse({
-      amount: parseFloat(amount),
-      type,
-      description,
-      categoryId,
-    });
-
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as string;
-        fieldErrors[field] = issue.message;
-      }
-      setErrors(fieldErrors);
-      return false;
+type Props =
+  | {
+      mode: 'create';
+      defaultValues?: {
+        amount: string;
+        type: Transaction['type'];
+        description: string;
+        categoryId: string;
+      };
+      onSubmit: (data: CreateTransactionInput) => Promise<void>;
     }
+  | {
+      mode: 'edit';
+      defaultValues?: {
+        amount: string;
+        type: Transaction['type'];
+        description: string;
+        categoryId: string;
+      };
+      onSubmit: (data: UpdateTransactionInput) => Promise<void>;
+    };
 
-    setErrors({});
-    return true;
-  }
+export function useTransactionForm({ mode, defaultValues, onSubmit }: Props) {
+  const [amount, setAmount] = useState(defaultValues?.amount ?? '');
+  const [type, setType] = useState<Transaction['type']>(
+    defaultValues?.type ?? 'income',
+  );
+  const [description, setDescription] = useState(
+    defaultValues?.description ?? '',
+  );
+  const [categoryId, setCategoryId] = useState(defaultValues?.categoryId ?? '');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
-  function reset() {
-    setAmount('');
-    setType('income');
-    setDescription('');
-    setCategoryId('');
-    setErrors({});
+  useEffect(() => {
+    if (defaultValues) {
+      setAmount(defaultValues.amount);
+      setType(defaultValues.type);
+      setDescription(defaultValues.description);
+      setCategoryId(defaultValues.categoryId);
+    }
+  }, [defaultValues]);
+
+  async function handleSubmit() {
+    const data = { amount: Number(amount), type, description, categoryId };
+
+    setSubmitting(true);
+    try {
+      if (mode === 'create') {
+        const result = createTransactionSchema.safeParse(data);
+        if (!result.success) {
+          const flat = result.error.flatten();
+          setErrors({
+            amount: flat.fieldErrors.amount?.[0] ?? '',
+            type: flat.fieldErrors.type?.[0] ?? '',
+            description: flat.fieldErrors.description?.[0] ?? '',
+            categoryId: flat.fieldErrors.categoryId?.[0] ?? '',
+          });
+          return;
+        }
+        await onSubmit(result.data);
+      } else {
+        const result = updateTransactionSchema.safeParse(data);
+        if (!result.success) {
+          const flat = result.error.flatten();
+          setErrors({
+            amount: flat.fieldErrors.amount?.[0] ?? '',
+            type: flat.fieldErrors.type?.[0] ?? '',
+            description: flat.fieldErrors.description?.[0] ?? '',
+            categoryId: flat.fieldErrors.categoryId?.[0] ?? '',
+          });
+          return;
+        }
+        await onSubmit(result.data);
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return {
-    amount, setAmount,
-    type, setType,
-    description, setDescription,
-    categoryId, setCategoryId,
+    amount,
+    setAmount,
+    type,
+    setType,
+    description,
+    setDescription,
+    categoryId,
+    setCategoryId,
     errors,
-    validate,
-    reset,
+    submitting,
+    handleSubmit,
   };
 }

@@ -3,8 +3,9 @@
 Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos, egresos y balance personal.
 
 ## Integrantes
+
 - Carlos González
-- Mayarí Achondo 
+- Mayarí Achondo
 
 ## Tecnologías utilizadas
 
@@ -43,25 +44,25 @@ Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos,
 ## Estructura del proyecto
 
 app/
-  index.tsx              → Pantalla de login
-  (tabs)/
-    _layout.tsx          → Navegación con tabs
-    index.tsx            → Lista de transacciones
-    balance.tsx          → Pantalla de balance
-    categories.tsx       → Lista de categorías
-    transaction/
-      [id].tsx           → Formulario de transacción
-    category/
-      [id].tsx           → Formulario de categoría
+index.tsx → Pantalla de login
+(tabs)/
+\_layout.tsx → Navegación con tabs
+index.tsx → Lista de transacciones
+balance.tsx → Pantalla de balance
+categories.tsx → Lista de categorías
+transaction/
+[id].tsx → Formulario de transacción
+category/
+[id].tsx → Formulario de categoría
 
 hooks/
-  useTransactions.ts     → Lógica y persistencia de transacciones
-  useCategories.ts       → Lógica y persistencia de categorías
-  useTransactionForm.ts  → Validación del formulario de transacción
-  useCategoryForm.ts     → Validación del formulario de categoría
+useTransactions.ts → Lógica y persistencia de transacciones
+useCategories.ts → Lógica y persistencia de categorías
+useTransactionForm.ts → Validación del formulario de transacción
+useCategoryForm.ts → Validación del formulario de categoría
 
 types/
-  index.ts               → Interfaces TypeScript (Transaction, Category)
+index.ts → Interfaces TypeScript (Transaction, Category)
 
 ## Problemas y soluciones encontrados
 
@@ -136,4 +137,5 @@ Al agregar SafeAreaView, los estilos quedaron dentro del bloque return en vez de
 Solución: asegurarse de que StyleSheet.create() siempre esté fuera de la función del componente.
 
 ### Herramientas usadas
+
 - Claude (claude.ai) — generación y corrección de código, explicaciones, README

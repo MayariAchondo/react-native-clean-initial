@@ -1,31 +1,53 @@
 import { Tabs } from 'expo-router';
 
+import { HapticTab } from '@/components/haptic-tab';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { colors } from '@/constants/theme';
+
 export default function TabLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Transacciones' }}
-      />
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: colors.tint,
+        headerShown: false,
+        tabBarButton: HapticTab,
+      }}
+    >
       <Tabs.Screen
         name="balance"
-        options={{ title: 'Balance' }}
+        options={{
+          title: 'Balance',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="doc.text.fill" color={color} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="categories"
-        options={{ title: 'Categorías' }}
+        options={{
+          title: 'Categorías',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="doc.text.fill" color={color} />
+          ),
+        }}
       />
       <Tabs.Screen
-        name="explore"
-        options={{ href: null }}
+        name="transactions"
+        options={{
+          title: 'Transacciones',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="doc.text.fill" color={color} />
+          ),
+        }}
       />
       <Tabs.Screen
-        name="category/[id]"
-        options={{ href: null, title: 'Categoría' }}
-      />
-      <Tabs.Screen
-        name="transaction/[id]"
-        options={{ href: null, title: 'Transacción' }}
+        name="profile"
+        options={{
+          title: 'Perfil',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.circle" color={color} />
+          ),
+        }}
       />
     </Tabs>
   );

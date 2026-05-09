@@ -1,29 +1,37 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  // SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-const VALID_EMAIL = 'admin@cashi.com';
-const VALID_PASSWORD = '123456';
+import { useLogin } from '@/hooks/useLogin';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
-
-  function handleLogin() {
-    if (email === VALID_EMAIL && password === VALID_PASSWORD) {
-      router.replace('/(tabs)');
-    } else {
-      setError('Credenciales incorrectas');
-    }
-  }
+  const {
+    email,
+    password,
+    error,
+    handleEmailChange,
+    handlePasswordChange,
+    handleLogin,
+  } = useLogin();
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.safe}
+    <KeyboardAvoidingView
+      style={styles.safe}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={24}
+    >
+      <ScrollView
+        contentContainerStyle={styles.safe}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       >
         <View style={styles.container}>
           <Text style={styles.title}>Cashi</Text>
@@ -31,13 +39,13 @@ export default function LoginScreen() {
             style={styles.input}
             placeholder="Email"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={handleEmailChange}
           />
           <TextInput
             style={styles.input}
             placeholder="Contraseña"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={handlePasswordChange}
             secureTextEntry
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -45,17 +53,33 @@ export default function LoginScreen() {
             <Text style={styles.buttonText}>Ingresar</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   container: { flex: 1, justifyContent: 'center', padding: 20 },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 40 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 12, borderRadius: 6 },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 12,
+    borderRadius: 6,
+  },
   error: { color: 'red', marginBottom: 12 },
-  button: { backgroundColor: '#000', padding: 14, borderRadius: 6, alignItems: 'center' },
+  button: {
+    backgroundColor: '#000',
+    padding: 14,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
   buttonText: { color: '#fff', fontWeight: 'bold' },
 });

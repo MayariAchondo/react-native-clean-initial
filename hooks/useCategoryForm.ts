@@ -1,28 +1,52 @@
-import { useState } from 'react';
-import { z } from 'zod/v4';
+import { useEffect, useState } from 'react';
+import {
+  createCategorySchema,
+  updateCategorySchema,
+  type CreateCategoryInput,
+  type UpdateCategoryInput,
+} from '../schemas/category.schema';
 
-const categorySchema = z.object({
-  name: z.string().min(1, 'El nombre es obligatorio'),
-});
+type Mode = 'create' | 'edit';
 
-export function useCategoryForm() {
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
+interface Props {
+  mode: Mode;
+  defaultValues?: { nombre: string };
+  onSubmit: (data: CreateCategoryInput | UpdateCategoryInput) => Promise<void>;
+}
 
-  function validate() {
-    const result = categorySchema.safeParse({ name });
-    if (!result.success) {
-      setError(result.error.issues[0].message);
-      return false;
+export function useCategoryForm({ mode, defaultValues, onSubmit }: Props) {
+  const [name, setName] = useState(defaultValues?.nombre ?? '');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (defaultValues) {
+      setName(defaultValues.nombre);
     }
-    setError('');
-    return true;
+  }, [defaultValues]);
+
+  async function handleSubmit() {
+    const schema =
+      mode === 'create' ? createCategorySchema : updateCategorySchema;
+    const data = { name };
+
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      const flat = result.error.flatten();
+      setErrors({
+        nombre: flat.fieldErrors.name?.[0] ?? '',
+      });
+      return;
+    }
+
+    setErrors({});
+    setSubmitting(true);
+    try {
+      await onSubmit(result.data);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function reset() {
-    setName('');
-    setError('');
-  }
-
-  return { name, setName, error, validate, reset };
+  return { name, setName, errors, submitting, handleSubmit };
 }
