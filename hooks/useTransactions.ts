@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useState } from 'react';
 import {
   CreateTransactionInput,
@@ -47,7 +48,7 @@ export function useTransactions() {
     input: CreateTransactionInput,
   ): Promise<void> => {
     const newTransaction: Transaction = {
-      id: crypto.randomUUID(),
+      id: Crypto.randomUUID(),
       date: new Date().toISOString(),
       ...input,
     };

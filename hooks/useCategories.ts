@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Category,
@@ -45,7 +46,7 @@ export function useCategories() {
 
   const addCategory = async (input: CreateCategoryInput): Promise<void> => {
     const newCategory: Category = {
-      id: crypto.randomUUID(),
+      id: Crypto.randomUUID(),
       ...input,
     };
     await saveCategories([...categories, newCategory]);
