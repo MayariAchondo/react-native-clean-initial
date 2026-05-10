@@ -14,6 +14,7 @@ Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos,
 - Expo Router (navegación)
 - AsyncStorage (persistencia)
 - Zod (validación)
+- Expo Crypto (generación segura de UUIDs)
 
 ## Requisitos previos
 
@@ -46,14 +47,11 @@ Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos,
 app/
 index.tsx → Pantalla de login
 (tabs)/
-\_layout.tsx → Navegación con tabs
-index.tsx → Lista de transacciones
-balance.tsx → Pantalla de balance
-categories.tsx → Lista de categorías
-transaction/
-[id].tsx → Formulario de transacción
-category/
-[id].tsx → Formulario de categoría
+\_layout.tsx → Navegación centralizada con tabs (Balance, Categorías, Transacciones, Perfil)
+
+schemas/
+category.schema.ts → Esquemas de validación Zod para categorías
+transaction.schema.ts → Esquemas de validación Zod para transacciones
 
 hooks/
 useTransactions.ts → Lógica y persistencia de transacciones
@@ -62,7 +60,8 @@ useTransactionForm.ts → Validación del formulario de transacción
 useCategoryForm.ts → Validación del formulario de categoría
 
 types/
-index.ts → Interfaces TypeScript (Transaction, Category)
+category.ts → Interfaces TypeScript (Category)
+transaction.ts → Interfaces TypeScript (Transaction)
 
 ## Problemas y soluciones encontrados
 
@@ -92,7 +91,7 @@ Solución: usar `as any` en las rutas dinámicas para evitar el error sin compli
 
 ## Uso de IA
 
-Se utilizó Claude (Anthropic) como asistente durante todo el desarrollo.
+Se utilizó Claude (Anthropic) como asistente durante todo el desarrollo y para solucionar problemas con el Selector de categorías y problemas con librerías.
 
 ### Guía lógica seguida
 
@@ -128,11 +127,12 @@ Solución: usar array vacío `[]` en las dependencias del `useCallback` para que
 **10. Al refrescar en el navegador vuelve al login**
 Esto ocurre porque la app no guarda la sesión en memoria entre recargas.
 Solución: no es un bug real, en un celular real no ocurre porque la app no se refresca.
+
 **11. SafeAreaView y KeyboardAvoidingView faltaban en todas las pantallas**
 El contenido quedaba tapado por el notch o la barra de estado en celulares, y el teclado tapaba los inputs al escribir.
 Solución: agregar SafeAreaView en todas las pantallas y KeyboardAvoidingView en las pantallas con formularios (login, categoría, transacción).
 
-**11. Estilos declarados dentro de la función**
+**12. Estilos declarados dentro de la función**
 Al agregar SafeAreaView, los estilos quedaron dentro del bloque return en vez de fuera de la función, causando errores de "variable usada antes de ser declarada".
 Solución: asegurarse de que StyleSheet.create() siempre esté fuera de la función del componente.
 
