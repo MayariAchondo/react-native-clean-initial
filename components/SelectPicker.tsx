@@ -86,43 +86,45 @@ export function SelectPicker({
         <Text style={styles.arrow}>⌵</Text>
       </TouchableOpacity>
 
-      <Modal visible={open} transparent animationType="slide">
-        <TouchableOpacity
-          style={styles.backdrop}
-          onPress={() => setOpen(false)}
-        />
-        <View style={styles.sheet}>
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>{placeholder}</Text>
-            <TouchableOpacity onPress={() => setOpen(false)}>
-              <Text style={styles.closeBtn}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={options}
-            keyExtractor={(item) => item.value}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.option,
-                  item.value === value && styles.optionSelected,
-                ]}
-                onPress={() => {
-                  onChange(item.value);
-                  setOpen(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    item.value === value && styles.optionTextSelected,
-                  ]}
-                >
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            )}
+      <Modal visible={open} transparent animationType="fade">
+        <View style={styles.centeredBackdrop}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFillObject}
+            onPress={() => setOpen(false)}
           />
+          <View style={styles.sheet}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>{placeholder}</Text>
+              <TouchableOpacity onPress={() => setOpen(false)}>
+                <Text style={styles.closeBtn}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={options}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.option,
+                    item.value === value && styles.optionSelected,
+                  ]}
+                  onPress={() => {
+                    onChange(item.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      item.value === value && styles.optionTextSelected,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
         </View>
       </Modal>
     </>
@@ -144,12 +146,14 @@ const styles = StyleSheet.create({
   triggerText: { fontSize: 16, color: colors.text },
   placeholder: { color: colors.muted },
   arrow: { fontSize: 16, color: colors.muted },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
+  centeredBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+  },
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    maxHeight: '50%',
+    maxHeight: '60%',
   },
   sheetHeader: {
     flexDirection: 'row',
