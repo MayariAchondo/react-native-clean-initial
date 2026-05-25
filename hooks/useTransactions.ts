@@ -5,7 +5,7 @@ import {
   CreateTransactionInput,
   Transaction,
   UpdateTransactionInput,
-} from '../types/transaction';
+} from '@/types/transaction';
 
 const STORAGE_KEY = 'transactions';
 
@@ -45,7 +45,10 @@ export function useTransactions() {
   };
 
   const addTransaction = async (
-    input: CreateTransactionInput,
+    input: CreateTransactionInput & {
+      photoUri?: string;
+      location?: Transaction['location'];
+    },
   ): Promise<void> => {
     const newTransaction: Transaction = {
       id: Crypto.randomUUID(),
@@ -57,8 +60,10 @@ export function useTransactions() {
 
   const updateTransaction = async (
     id: string,
-    input: UpdateTransactionInput,
-    // transaction: Omit<Transaction, 'id' | 'date'>,
+    input: UpdateTransactionInput & {
+      photoUri?: string;
+      location?: Transaction['location'];
+    },
   ): Promise<void> => {
     const updated = transactions.map((t) =>
       t.id === id ? { ...t, ...input } : t,

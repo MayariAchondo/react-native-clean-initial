@@ -15,6 +15,8 @@ Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos,
 - AsyncStorage (persistencia)
 - Zod (validación)
 - Expo Crypto (generación segura de UUIDs)
+- Expo Image Picker (cámara y galería)
+- Expo Location (GPS)
 
 ## Requisitos previos
 
@@ -58,6 +60,8 @@ useTransactions.ts → Lógica y persistencia de transacciones
 useCategories.ts → Lógica y persistencia de categorías
 useTransactionForm.ts → Validación del formulario de transacción
 useCategoryForm.ts → Validación del formulario de categoría
+useImagePicker.ts → Acceso a cámara/galería y manejo de permisos
+useLocation.ts → GPS y manejo de permisos
 
 types/
 category.ts → Interfaces TypeScript (Category)
@@ -89,11 +93,20 @@ Solución: eliminar el archivo con `rm` y crear la carpeta con `mkdir`.
 Expo Router es estricto con los tipos de rutas y marcaba error al navegar con strings dinámicos.
 Solución: usar `as any` en las rutas dinámicas para evitar el error sin complicar el código.
 
+## Cambios respecto a la Evaluación 2
+
+Se agregaron dos campos opcionales a `Transaction`:
+- `photoUri?: string` — URI local de la foto del comprobante
+- `location?: { latitude: number; longitude: number }` — coordenadas GPS donde se realizó la transacción
+
+Se instalaron las dependencias `expo-image-picker` y `expo-location`.
+
 ## Uso de IA
 
-Se utilizó Claude (Anthropic) como asistente durante todo el desarrollo y para solucionar problemas con el Selector de categorías y problemas con librerías.
+- **OpenCode (plan - explicativo):** Se utilizó OpenCode en modo plan para analizar el código existente, generar el plan de trabajo detallado y explicar la lógica de cada cambio antes de implementarlo.
+- **Claude (Anthropic):** El plan y el código generado fueron revisados con Claude para verificar coherencia, buenas prácticas y correcto manejo de permisos y hooks.
 
-### Guía lógica seguida
+### Guía lógica seguida (Evaluación 2)
 
 El proceso de trabajo con IA se organizó en estas etapas:
 

@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Para adjuntar foto del comprobante",
+        "NSPhotoLibraryUsageDescription": "Para seleccionar foto del comprobante",
+        "NSLocationWhenInUseUsageDescription": "Para registrar dónde realizaste la transacción"
+      }
     },
     "android": {
       "adaptiveIcon": {

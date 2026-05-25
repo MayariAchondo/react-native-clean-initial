@@ -5,6 +5,11 @@ export interface Transaction {
   description: string;
   date: string;
   categoryId: string;
+  photoUri?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export type CreateTransactionInput = Pick<

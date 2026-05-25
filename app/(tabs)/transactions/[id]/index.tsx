@@ -1,6 +1,8 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback } from 'react';
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -12,7 +14,6 @@ import {
 import { colors } from '@/constants/theme';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransactions } from '@/hooks/useTransactions';
-import { useCallback } from 'react';
 
 export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -85,6 +86,26 @@ export default function TransactionDetailScreen() {
           {new Date(transaction.date).toLocaleDateString()}
         </Text>
 
+        {transaction.photoUri ? (
+          <View>
+            <Text style={styles.label}>Comprobante</Text>
+            <Image
+              source={{ uri: transaction.photoUri }}
+              style={styles.photo}
+              resizeMode="cover"
+            />
+          </View>
+        ) : null}
+
+        {transaction.location ? (
+          <View>
+            <Text style={styles.label}>Ubicación</Text>
+            <Text style={styles.value}>
+              {transaction.location.latitude}, {transaction.location.longitude}
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.actions}>
           <TouchableOpacity
             style={styles.editButton}
@@ -126,6 +147,7 @@ const styles = StyleSheet.create({
   },
   type: { fontSize: 14, color: colors.muted, marginBottom: 16 },
   divider: { height: 1, backgroundColor: colors.border, marginBottom: 16 },
+  photo: { width: '100%', height: 200, borderRadius: 8, marginTop: 4 },
   label: { fontSize: 12, color: colors.muted, marginBottom: 2, marginTop: 12 },
   value: { fontSize: 16, color: colors.text },
   actions: { flexDirection: 'row', gap: 12, marginTop: 32 },

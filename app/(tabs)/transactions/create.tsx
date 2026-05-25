@@ -1,6 +1,14 @@
 import { SelectPicker } from '@/components/SelectPicker';
+import { colors } from '@/constants/theme';
+import { useCategories } from '@/hooks/useCategories';
+import { useImagePicker } from '@/hooks/useImagePicker';
+import { useLocation } from '@/hooks/useLocation';
+import { useTransactionForm } from '@/hooks/useTransactionForm';
+import { useTransactions } from '@/hooks/useTransactions';
 import { router } from 'expo-router';
 import {
+  ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,19 +19,20 @@ import {
   View,
 } from 'react-native';
 
-import { colors } from '@/constants/theme';
-import { useCategories } from '@/hooks/useCategories';
-import { useTransactionForm } from '@/hooks/useTransactionForm';
-import { useTransactions } from '@/hooks/useTransactions';
-
 export default function CreateTransactionScreen() {
   const { addTransaction } = useTransactions();
   const { categories } = useCategories();
+  const img = useImagePicker();
+  const loc = useLocation();
 
   const form = useTransactionForm({
     mode: 'create',
     onSubmit: async (data) => {
-      await addTransaction(data);
+      await addTransaction({
+        ...data,
+        photoUri: img.imageUri ?? undefined,
+        location: loc.location ?? undefined,
+      });
       router.back();
     },
   });
@@ -99,6 +108,57 @@ export default function CreateTransactionScreen() {
             placeholder="Seleccionar categoría..."
           />
 
+          <Text style={styles.sectionTitle}>Comprobante</Text>
+          <View style={styles.photoRow}>
+            <TouchableOpacity style={styles.photoBtn} onPress={img.pickFromCamera}>
+              <Text style={styles.photoBtnText}>Tomar foto</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.photoBtn} onPress={img.pickFromGallery}>
+              <Text style={styles.photoBtnText}>Desde galería</Text>
+            </TouchableOpacity>
+          </View>
+          {img.permissionError ? (
+            <Text style={styles.errorMessage}>{img.permissionError}</Text>
+          ) : null}
+          {img.imageUri ? (
+            <View>
+              <Image
+                source={{ uri: img.imageUri }}
+                style={styles.preview}
+                resizeMode="cover"
+              />
+              <TouchableOpacity onPress={img.clearImage}>
+                <Text style={styles.removeLink}>Quitar foto</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          <Text style={styles.sectionTitle}>Ubicación</Text>
+          <TouchableOpacity
+            style={styles.locationBtn}
+            onPress={loc.getCurrentLocation}
+            disabled={loc.loading}
+          >
+            {loc.loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.locationBtnText}>Registrar ubicación</Text>
+            )}
+          </TouchableOpacity>
+          {loc.permissionError ? (
+            <Text style={styles.errorMessage}>{loc.permissionError}</Text>
+          ) : null}
+          {loc.location ? (
+            <View>
+              <Text style={styles.coordsText}>
+                Lat: {loc.location.latitude}, Lon: {loc.location.longitude}
+              </Text>
+              <TouchableOpacity onPress={loc.clearLocation}>
+                <Text style={styles.removeLink}>Limpiar ubicación</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
           <TouchableOpacity
             style={styles.submitButton}
             onPress={form.handleSubmit}
@@ -123,6 +183,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
@@ -152,12 +219,54 @@ const styles = StyleSheet.create({
   label: { fontSize: 16, marginBottom: 8 },
   inputError: { borderColor: colors.danger },
   errorLabel: { fontSize: 12, color: colors.danger, marginBottom: 8 },
+  photoRow: { flexDirection: 'row', gap: 12, marginBottom: 8 },
+  photoBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+  },
+  photoBtnText: { fontSize: 14, color: colors.tint, fontWeight: '600' },
+  preview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  removeLink: {
+    fontSize: 14,
+    color: colors.danger,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  locationBtn: {
+    backgroundColor: colors.tint,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  locationBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  coordsText: {
+    fontSize: 14,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  errorMessage: {
+    fontSize: 13,
+    color: colors.danger,
+    marginBottom: 8,
+  },
   submitButton: {
     backgroundColor: colors.tint,
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 16,
   },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
