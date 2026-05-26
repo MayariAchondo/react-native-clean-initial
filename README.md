@@ -67,7 +67,7 @@ types/
 category.ts → Interfaces TypeScript (Category)
 transaction.ts → Interfaces TypeScript (Transaction)
 
-## Problemas y soluciones encontrados
+## Problemas y soluciones encontrados (Evaluación 2)
 
 **1. `npx` vs `npm`**
 Al intentar correr la app con `npm expo start` el comando no fue reconocido.
@@ -93,18 +93,7 @@ Solución: eliminar el archivo con `rm` y crear la carpeta con `mkdir`.
 Expo Router es estricto con los tipos de rutas y marcaba error al navegar con strings dinámicos.
 Solución: usar `as any` en las rutas dinámicas para evitar el error sin complicar el código.
 
-## Cambios respecto a la Evaluación 2
 
-Se agregaron dos campos opcionales a `Transaction`:
-- `photoUri?: string` — URI local de la foto del comprobante
-- `location?: { latitude: number; longitude: number }` — coordenadas GPS donde se realizó la transacción
-
-Se instalaron las dependencias `expo-image-picker` y `expo-location`.
-
-## Uso de IA
-
-- **OpenCode (plan - explicativo):** Se utilizó OpenCode en modo plan para analizar el código existente, generar el plan de trabajo detallado y explicar la lógica de cada cambio antes de implementarlo.
-- **Claude (Anthropic):** El plan y el código generado fueron revisados con Claude para verificar coherencia, buenas prácticas y correcto manejo de permisos y hooks.
 
 ### Guía lógica seguida (Evaluación 2)
 
@@ -149,6 +138,42 @@ Solución: agregar SafeAreaView en todas las pantallas y KeyboardAvoidingView en
 Al agregar SafeAreaView, los estilos quedaron dentro del bloque return en vez de fuera de la función, causando errores de "variable usada antes de ser declarada".
 Solución: asegurarse de que StyleSheet.create() siempre esté fuera de la función del componente.
 
-### Herramientas usadas
+## Cambios respecto a la Evaluación 2
 
-- Claude (claude.ai) — generación y corrección de código, explicaciones, README
+### Modelo de datos
+Se agregaron dos campos opcionales a `Transaction`:
+- `photoUri?: string` — URI local de la foto del comprobante
+- `location?: { latitude: number; longitude: number }` — coordenadas GPS
+
+Las transacciones sin foto ni ubicación siguen funcionando igual.
+
+### Nuevas dependencias
+Instaladas con `npx expo install`:
+- `expo-image-picker` — acceso a cámara y galería
+- `expo-location` — GPS
+
+### Nuevos hooks
+- `useImagePicker(initialUri?)` — encapsula cámara, galería y permisos de imagen
+- `useLocation` — encapsula GPS y permiso de ubicación
+
+### Nuevas funcionalidades
+- Adjuntar foto del comprobante al crear o editar una transacción
+- Registrar coordenadas GPS al crear una transacción
+- Ambos datos se persisten en AsyncStorage junto con la transacción
+- Los permisos denegados muestran un mensaje en pantalla, sin Alert
+
+
+### Problemas en la planificación de Opencode (Evaluación 3)
+
+1. Permisos en iOS: para que el código pueda acceder a la cámara, debe haber una declaración en app.json que defina para qué se usará el hardware. De caso contrario, el permiso no es denegado, sino que iOS no llega a mostrar el diálogo de permisos al usuario, simplemente lanza un error fatal. La solución es agregar las tres líneas respectivas en infoPlist que habilitan el juego de permisos.
+
+2. Inconsistencia de initialUri: en la creación del hook useImagePicker no tiene initialUri en la interfaz, pero se menciona al modificar el edit. Es decir, se le atribuye una capacidad que no está declarada en su gramática. La solución más simple es que el hook acepte un parámetro opcional al inicializarse. 
+
+3. Cast as, forzar una gramática: addTransaction fue definido para recibir cierto tipo de dato (sin photoUri ni location) y, en vez de cambiar esa definición, el plan propone disfrazarlo con "as" que, en el contexto de TypeScript, es como decirle "confía en mí, esto es lo que parece aunque las reglas digan otra cosa". Em vez de forzar esa interpretación, corresponde cambiar la firma de addTransaction en su hook directamente, para que el tipo incluya los nuevos datos sin necesidad de forzar la gramática y el componente los pase sin un disfraz.
+
+4. Variable coords, un nombre sin referente: en la modificación de create.tsx se utiliza coords pero, en el hook useLocation, el estado se expone como location. 
+
+## Uso de IA
+
+- **OpenCode (plan - explicativo):** Se utilizó OpenCode en modo plan para analizar el código existente, generar el plan de trabajo detallado y explicar la lógica de cada cambio antes de implementarlo.
+- **Claude (Anthropic):** El plan y el código generado fueron revisados con Claude para verificar coherencia, buenas prácticas y correcto manejo de permisos y hooks. También se le pidió ayuda para la explicación lógica de las implementaciones técnicas.
