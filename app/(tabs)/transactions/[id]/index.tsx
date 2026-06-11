@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Alert,
   Image,
@@ -9,31 +9,56 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
 
 import { colors } from '@/constants/theme';
-import { useCategories } from '@/hooks/useCategories';
 import { useTransactions } from '@/hooks/useTransactions';
+import { Transaction } from '@/types/transaction';
 
 export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { transactions, deleteTransaction, reload } = useTransactions();
-  const { categories } = useCategories();
+  const transactionId = Number(id);
+  const { deleteTransaction, getTransactionById } = useTransactions();
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      void reload();
-    }, [reload]),
+      let cancelled = false;
+      const load = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const data = await getTransactionById(transactionId);
+          if (!cancelled) setTransaction(data);
+        } catch {
+          if (!cancelled) setError('Transacción no encontrada');
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      };
+      load();
+      return () => { cancelled = true; };
+    }, [transactionId, getTransactionById]),
   );
 
-  const transaction = transactions.find((t) => t.id === id);
-  const category = categories.find((c) => c.id === transaction?.categoryId);
-
-  if (!transaction) {
+  if (loading) {
     return (
       <View style={styles.screen}>
         <View style={styles.centered}>
-          <Text style={styles.errorText}>Transacción no encontrada</Text>
+          <ActivityIndicator size="large" color={colors.tint} />
+        </View>
+      </View>
+    );
+  }
+
+  if (error || !transaction) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error || 'Transacción no encontrada'}</Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.backLink}>Volver</Text>
           </TouchableOpacity>
@@ -45,7 +70,7 @@ export default function TransactionDetailScreen() {
   const handleEliminar = () => {
     if (Platform.OS === 'web') {
       if (window.confirm('¿Estás seguro?')) {
-        deleteTransaction(id!).then(() => router.back());
+        deleteTransaction(transactionId).then(() => router.back());
       }
     } else {
       Alert.alert('Eliminar transacción', '¿Estás seguro?', [
@@ -54,7 +79,7 @@ export default function TransactionDetailScreen() {
           text: 'Eliminar',
           style: 'destructive',
           onPress: async () => {
-            await deleteTransaction(id!);
+            await deleteTransaction(transactionId);
             router.back();
           },
         },
@@ -79,29 +104,29 @@ export default function TransactionDetailScreen() {
         <Text style={styles.value}>{transaction.description}</Text>
 
         <Text style={styles.label}>Categoría</Text>
-        <Text style={styles.value}>{category?.name ?? 'Sin categoría'}</Text>
+        <Text style={styles.value}>{transaction.category?.name ?? 'Sin categoría'}</Text>
 
         <Text style={styles.label}>Fecha</Text>
         <Text style={styles.value}>
           {new Date(transaction.date).toLocaleDateString()}
         </Text>
 
-        {transaction.photoUri ? (
+        {transaction.receiptUrl ? (
           <View>
             <Text style={styles.label}>Comprobante</Text>
             <Image
-              source={{ uri: transaction.photoUri }}
+              source={{ uri: transaction.receiptUrl }}
               style={styles.photo}
               resizeMode="cover"
             />
           </View>
         ) : null}
 
-        {transaction.location ? (
+        {transaction.latitude && transaction.longitude ? (
           <View>
             <Text style={styles.label}>Ubicación</Text>
             <Text style={styles.value}>
-              {transaction.location.latitude}, {transaction.location.longitude}
+              Lat: {transaction.latitude}, Lon: {transaction.longitude}
             </Text>
           </View>
         ) : null}
@@ -112,7 +137,7 @@ export default function TransactionDetailScreen() {
             onPress={() =>
               router.push({
                 pathname: '/(tabs)/transactions/[id]/edit',
-                params: { id },
+                params: { id: transactionId },
               })
             }
           >

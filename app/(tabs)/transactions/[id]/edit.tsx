@@ -6,7 +6,7 @@ import { useLocation } from '@/hooks/useLocation';
 import { useTransactionForm } from '@/hooks/useTransactionForm';
 import { useTransactions } from '@/hooks/useTransactions';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -22,12 +22,14 @@ import {
 
 export default function EditTransactionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { transactions, updateTransaction } = useTransactions();
+  const transactionId = Number(id);
+  const { transactions, updateTransaction, uploadReceipt } = useTransactions();
   const { categories } = useCategories();
 
-  const transaction = transactions.find((t) => t.id === id);
-  const img = useImagePicker(transaction?.photoUri);
+  const transaction = transactions.find((t) => t.id === transactionId);
+  const img = useImagePicker(transaction?.receiptUrl);
   const loc = useLocation();
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const defaultValues = useMemo(() => {
     return transaction
@@ -36,6 +38,7 @@ export default function EditTransactionScreen() {
           type: transaction.type,
           description: transaction.description,
           categoryId: transaction.categoryId,
+          date: transaction.date,
         }
       : undefined;
   }, [transaction]);
@@ -44,10 +47,21 @@ export default function EditTransactionScreen() {
     mode: 'edit',
     defaultValues,
     onSubmit: async (data) => {
-      await updateTransaction(id!, {
+      setUploadError(null);
+      let receiptUrl = transaction?.receiptUrl;
+      if (img.imageUri && img.imageUri !== transaction?.receiptUrl) {
+        try {
+          receiptUrl = await uploadReceipt(img.imageUri);
+        } catch {
+          setUploadError('Error al subir la imagen');
+          return;
+        }
+      }
+      await updateTransaction(transactionId, {
         ...data,
-        photoUri: img.imageUri ?? undefined,
-        location: loc.location ?? undefined,
+        receiptUrl,
+        latitude: loc.location?.latitude,
+        longitude: loc.location?.longitude,
       });
       router.back();
     },
@@ -134,7 +148,7 @@ export default function EditTransactionScreen() {
               value: cat.id,
             }))}
             value={form.categoryId}
-            onChange={form.setCategoryId}
+            onChange={(val) => form.setCategoryId(typeof val === 'string' ? Number(val) : val)}
             placeholder="Seleccionar categoría..."
           />
           {form.errors.categoryId ? (
@@ -153,6 +167,9 @@ export default function EditTransactionScreen() {
           {img.permissionError ? (
             <Text style={styles.errorMessage}>{img.permissionError}</Text>
           ) : null}
+          {uploadError ? (
+            <Text style={styles.errorMessage}>{uploadError}</Text>
+          ) : null}
           {img.imageUri ? (
             <View>
               <Image
@@ -167,9 +184,9 @@ export default function EditTransactionScreen() {
           ) : null}
 
           <Text style={styles.sectionTitle}>Ubicación</Text>
-          {transaction.location && !loc.location ? (
+          {transaction.latitude && transaction.longitude && !loc.location ? (
             <Text style={styles.coordsText}>
-              Lat: {transaction.location.latitude}, Lon: {transaction.location.longitude}
+              Lat: {transaction.latitude}, Lon: {transaction.longitude}
             </Text>
           ) : null}
           <TouchableOpacity
@@ -248,16 +265,16 @@ const styles = StyleSheet.create({
   typeRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   typeOption: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     padding: 10,
     borderRadius: 6,
   },
   typeSelected: {
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: colors.tint,
     padding: 10,
     borderRadius: 6,
-    backgroundColor: '#eee',
+    backgroundColor: colors.tint + '20',
   },
   inputError: { borderColor: colors.danger },
   errorLabel: { fontSize: 12, color: colors.danger, marginBottom: 8 },

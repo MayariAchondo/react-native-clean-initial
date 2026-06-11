@@ -1,22 +1,14 @@
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  // SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-
+import { router } from 'expo-router';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useLogin } from '@/hooks/useLogin';
+import { colors } from '@/constants/theme';
 
 export default function LoginScreen() {
   const {
     email,
     password,
     error,
+    loading,
     handleEmailChange,
     handlePasswordChange,
     handleLogin,
@@ -40,6 +32,9 @@ export default function LoginScreen() {
             placeholder="Email"
             value={email}
             onChangeText={handleEmailChange}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
           />
           <TextInput
             style={styles.input}
@@ -47,10 +42,14 @@ export default function LoginScreen() {
             value={password}
             onChangeText={handlePasswordChange}
             secureTextEntry
+            autoComplete="current-password"
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Ingresar</Text>
+          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
+            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.buttonText}>Ingresar</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/register')} style={styles.linkContainer}>
+            <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -69,17 +68,22 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
+    borderColor: colors.border,
+    padding: 12,
     marginBottom: 12,
-    borderRadius: 6,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    color: colors.text,
+    fontSize: 16,
   },
-  error: { color: 'red', marginBottom: 12 },
+  error: { color: colors.danger, marginBottom: 12, fontSize: 14 },
   button: {
-    backgroundColor: '#000',
+    backgroundColor: colors.tint,
     padding: 14,
-    borderRadius: 6,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  buttonText: { color: '#fff', fontWeight: 'bold' },
+  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  linkContainer: { marginTop: 16, alignItems: 'center' },
+  linkText: { color: colors.tint, textDecorationLine: 'underline', fontSize: 14 },
 });

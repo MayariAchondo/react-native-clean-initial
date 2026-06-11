@@ -12,13 +12,13 @@ import {
 
 interface Option {
   label: string;
-  value: string;
+  value: string | number;
 }
 
 interface Props {
   options: Option[];
-  value: string;
-  onChange: (value: string) => void;
+  value: string | number;
+  onChange: (value: string | number) => void;
   placeholder?: string;
 }
 
@@ -101,7 +101,7 @@ export function SelectPicker({
             </View>
             <FlatList
               data={options}
-              keyExtractor={(item) => item.value}
+              keyExtractor={(item) => String(item.value)}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[

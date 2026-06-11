@@ -14,7 +14,8 @@ type Props =
         amount: string;
         type: Transaction['type'];
         description: string;
-        categoryId: string;
+        categoryId: number;
+        date?: string;
       };
       onSubmit: (data: CreateTransactionInput) => Promise<void>;
     }
@@ -24,7 +25,8 @@ type Props =
         amount: string;
         type: Transaction['type'];
         description: string;
-        categoryId: string;
+        categoryId: number;
+        date?: string;
       };
       onSubmit: (data: UpdateTransactionInput) => Promise<void>;
     };
@@ -37,7 +39,7 @@ export function useTransactionForm({ mode, defaultValues, onSubmit }: Props) {
   const [description, setDescription] = useState(
     defaultValues?.description ?? '',
   );
-  const [categoryId, setCategoryId] = useState(defaultValues?.categoryId ?? '');
+  const [categoryId, setCategoryId] = useState<number | ''>(defaultValues?.categoryId ?? '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -48,10 +50,17 @@ export function useTransactionForm({ mode, defaultValues, onSubmit }: Props) {
       setDescription(defaultValues.description);
       setCategoryId(defaultValues.categoryId);
     }
-  }, [defaultValues]);
+  }, [defaultValues?.amount, defaultValues?.type, defaultValues?.description, defaultValues?.categoryId]);
 
   async function handleSubmit() {
-    const data = { amount: Number(amount), type, description, categoryId };
+    const now = new Date().toISOString();
+    const data = {
+      amount: Number(amount),
+      type,
+      description,
+      categoryId: categoryId === '' ? 0 : categoryId,
+      date: defaultValues?.date ?? now.split('T')[0],
+    };
 
     setSubmitting(true);
     try {

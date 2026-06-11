@@ -23,7 +23,7 @@ export function useCategoryForm({ mode, defaultValues, onSubmit }: Props) {
     if (defaultValues) {
       setName(defaultValues.nombre);
     }
-  }, [defaultValues]);
+  }, [defaultValues?.nombre]);
 
   async function handleSubmit() {
     const schema =

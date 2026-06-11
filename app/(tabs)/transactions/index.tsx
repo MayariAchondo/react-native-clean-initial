@@ -61,7 +61,7 @@ export default function TransactionListScreen() {
       </View>
       <FlatList
         data={transactions}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TransactionItem
             item={item}

@@ -1,71 +1,57 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Category,
   CreateCategoryInput,
   UpdateCategoryInput,
-} from '../types/category';
-
-const STORAGE_KEY = 'categories';
+} from '@/types/category';
+import { apiRequest } from '@/lib/api';
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar desde AsyncStorage al montar el componente
   const loadCategories = useCallback(async () => {
     try {
-      // solo muestra loading si no hay datos aún
-      if (categories.length === 0) setLoading(true);
-
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      const data: Category[] = raw ? JSON.parse(raw) : [];
+      setLoading(true);
+      const data = await apiRequest<Category[]>('/categories');
       setCategories(data);
+      setError(null);
     } catch (e) {
       console.error('Error cargando categorías:', e);
-      setError('No se pudieron cargar las categorías');
+      setError(e instanceof Error ? e.message : 'No se pudieron cargar las categorías');
     } finally {
       setLoading(false);
     }
-  }, [categories.length]);
+  }, []);
 
   useEffect(() => {
     loadCategories();
   }, [loadCategories]);
 
-  const saveCategories = async (newCategories: Category[]) => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newCategories));
-      setCategories(newCategories);
-    } catch {
-      setError('No se pudieron guardar las categorías');
-    }
-  };
+  const addCategory = useCallback(async (input: CreateCategoryInput): Promise<void> => {
+    const newCategory = await apiRequest<Category>('/categories', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    setCategories((prev) => [...prev, newCategory]);
+  }, []);
 
-  const addCategory = async (input: CreateCategoryInput): Promise<void> => {
-    const newCategory: Category = {
-      id: Crypto.randomUUID(),
-      ...input,
-    };
-    await saveCategories([...categories, newCategory]);
-  };
-
-  const updateCategory = async (
-    id: string,
+  const updateCategory = useCallback(async (
+    id: number,
     input: UpdateCategoryInput,
   ): Promise<void> => {
-    const updated = categories.map((cat) =>
-      cat.id === id ? { ...cat, ...input } : cat,
-    );
-    await saveCategories(updated);
-  };
+    const updated = await apiRequest<Category>(`/categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
+    setCategories((prev) => prev.map((cat) => (cat.id === id ? updated : cat)));
+  }, []);
 
-  const deleteCategory = async (id: string): Promise<void> => {
-    const filtered = categories.filter((cat) => cat.id !== id);
-    await saveCategories(filtered);
-  };
+  const deleteCategory = useCallback(async (id: number): Promise<void> => {
+    await apiRequest(`/categories/${id}`, { method: 'DELETE' });
+    setCategories((prev) => prev.filter((cat) => cat.id !== id));
+  }, []);
 
   return {
     categories,

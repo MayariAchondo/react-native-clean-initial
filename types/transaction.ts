@@ -1,19 +1,35 @@
 export interface Transaction {
-  id: string;
+  id: number;
   amount: number;
   type: 'income' | 'expense';
   description: string;
   date: string;
-  categoryId: string;
-  photoUri?: string;
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
+  categoryId: number;
+  receiptUrl?: string;
+  latitude?: number;
+  longitude?: number;
+  category?: Category;
+  userId?: number;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+}
+
+export interface Balance {
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
 }
 
 export type CreateTransactionInput = Pick<
   Transaction,
-  'amount' | 'type' | 'description' | 'categoryId'
->;
+  'amount' | 'type' | 'description' | 'categoryId' | 'date'
+> & {
+  receiptUrl?: string;
+  latitude?: number;
+  longitude?: number;
+};
+
 export type UpdateTransactionInput = Partial<CreateTransactionInput>;

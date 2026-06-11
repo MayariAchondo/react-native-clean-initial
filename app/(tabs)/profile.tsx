@@ -1,30 +1,39 @@
 import { colors } from '@/constants/theme';
-import { CommonActions } from '@react-navigation/native';
-import { useNavigation } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfileScreen() {
-  const navigation = useNavigation();
+  const { user, isLoading, logout } = useAuth();
 
-  const handleLogout = () => {
-    navigation
-      .getParent()
-      ?.dispatch(
-        CommonActions.reset({ index: 0, routes: [{ name: 'index' }] }),
-      );
+  const handleLogout = async () => {
+    await logout();
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.tint} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>?</Text>
+          <Text style={styles.avatarText}>{user.email.charAt(0).toUpperCase()}</Text>
         </View>
         <Text style={styles.title}>Perfil</Text>
-        <Text style={styles.email}>Usuario Desconocido</Text>
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={{ color: colors.tint, marginTop: 16 }}>Logout</Text>
+        <Text style={styles.email}>{user.email}</Text>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <Text style={styles.logoutText}>Cerrar sesión</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -35,6 +44,11 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   container: {
     flex: 1,
@@ -65,5 +79,17 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     color: colors.muted,
+    marginBottom: 24,
+  },
+  logoutButton: {
+    backgroundColor: colors.danger,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

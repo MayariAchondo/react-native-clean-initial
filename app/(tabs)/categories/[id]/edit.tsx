@@ -18,7 +18,8 @@ import { useMemo } from 'react';
 export default function EditCategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { categories, updateCategory } = useCategories();
-  const category = categories.find((n) => n.id === id);
+  const categoryId = Number(id);
+  const category = categories.find((n) => n.id === categoryId);
 
   const defaultValues = useMemo(() => {
     return category ? { nombre: category.name } : undefined;
@@ -28,7 +29,7 @@ export default function EditCategoryScreen() {
     mode: 'edit',
     defaultValues,
     onSubmit: async (data) => {
-      await updateCategory(id!, data);
+      await updateCategory(categoryId, data);
       router.back();
     },
   });

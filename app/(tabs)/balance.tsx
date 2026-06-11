@@ -7,12 +7,13 @@ import { colors } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function BalanceScreen() {
-  const { totalIncome, totalExpense, balance, reload } = useTransactions();
+  const { totalIncome, totalExpense, balance, reload, reloadBalance } = useTransactions();
 
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [reload]),
+      reloadBalance();
+    }, [reload, reloadBalance]),
   );
 
   return (
@@ -27,7 +28,7 @@ export default function BalanceScreen() {
           <Text style={styles.label}>Total egresos:</Text>
           <Text style={styles.expense}>${totalExpense}</Text>
         </View>
-        <View style={styles.row}>
+        <View style={[styles.row, styles.balanceRow]}>
           <Text style={styles.label}>Balance:</Text>
           <Text style={styles.balance}>${balance}</Text>
         </View>
@@ -45,10 +46,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: colors.border,
   },
-  label: { fontSize: 16 },
-  income: { fontSize: 16, color: 'green', fontWeight: 'bold' },
-  expense: { fontSize: 16, color: 'red', fontWeight: 'bold' },
-  balance: { fontSize: 16, fontWeight: 'bold' },
+  balanceRow: {
+    borderBottomWidth: 0,
+    marginTop: 8,
+  },
+  label: { fontSize: 16, color: colors.text },
+  income: { fontSize: 16, color: '#16a34a', fontWeight: 'bold' },
+  expense: { fontSize: 16, color: colors.danger, fontWeight: 'bold' },
+  balance: { fontSize: 16, fontWeight: 'bold', color: colors.text },
 });

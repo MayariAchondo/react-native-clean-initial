@@ -1,36 +1,49 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
-
-const VALID_EMAIL = 'admin@cashi.com';
-const VALID_PASSWORD = '123456';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useLogin() {
+  const { login, error: authError, clearError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleEmailChange = (text: string) => {
     setEmail(text);
+    setError('');
+    clearError();
   };
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
+    setError('');
+    clearError();
   };
 
-  const handleLogin = () => {
-    if (email !== VALID_EMAIL && password !== VALID_PASSWORD) {
-      setError('Credenciales incorrectas');
-      return;
-    }
-
+  const handleLogin = async () => {
     setError('');
-    router.replace('/(tabs)/categories');
+    setLoading(true);
+    try {
+      await login(email, password);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al iniciar sesión';
+      if (message === 'UNAUTHORIZED') {
+        setError('Credenciales incorrectas');
+      } else if (message.includes('validation')) {
+        setError('Email y contraseña son requeridos');
+      } else {
+        setError(message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
     email,
     password,
-    error,
+    error: error || authError,
+    loading,
     handleEmailChange,
     handlePasswordChange,
     handleLogin,

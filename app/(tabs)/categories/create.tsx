@@ -20,7 +20,7 @@ export default function CreateCategoryScreen() {
   const form = useCategoryForm({
     mode: 'create',
     onSubmit: async (data) => {
-      await addCategory(data as { name: string });
+      await addCategory(data);
       router.back();
     },
   });

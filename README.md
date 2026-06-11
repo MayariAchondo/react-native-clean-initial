@@ -17,6 +17,7 @@ Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos,
 - Expo Crypto (generación segura de UUIDs)
 - Expo Image Picker (cámara y galería)
 - Expo Location (GPS)
+- Expo Secure Store (almacenamiento seguro de tokens)
 
 ## Requisitos previos
 
@@ -48,20 +49,29 @@ Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos,
 
 app/
 index.tsx → Pantalla de login
+register.tsx → Pantalla de registro
 (tabs)/
 \_layout.tsx → Navegación centralizada con tabs (Balance, Categorías, Transacciones, Perfil)
 
-schemas/
-category.schema.ts → Esquemas de validación Zod para categorías
-transaction.schema.ts → Esquemas de validación Zod para transacciones
+contexts/
+AuthContext.tsx → Contexto de autenticación (AuthProvider, useAuth)
 
 hooks/
+useLogin.ts → Lógica de login (usa useAuth)
 useTransactions.ts → Lógica y persistencia de transacciones
 useCategories.ts → Lógica y persistencia de categorías
 useTransactionForm.ts → Validación del formulario de transacción
 useCategoryForm.ts → Validación del formulario de categoría
 useImagePicker.ts → Acceso a cámara/galería y manejo de permisos
 useLocation.ts → GPS y manejo de permisos
+
+lib/
+auth.ts → Funciones de autenticación (SecureStore)
+api.ts → Cliente HTTP centralizado (apiRequest, apiUpload)
+
+schemas/
+category.schema.ts → Esquemas de validación Zod para categorías
+transaction.schema.ts → Esquemas de validación Zod para transacciones
 
 types/
 category.ts → Interfaces TypeScript (Category)
@@ -92,6 +102,32 @@ Solución: eliminar el archivo con `rm` y crear la carpeta con `mkdir`.
 **6. Errores de rutas TypeScript con Expo Router**
 Expo Router es estricto con los tipos de rutas y marcaba error al navegar con strings dinámicos.
 Solución: usar `as any` en las rutas dinámicas para evitar el error sin complicar el código.
+
+## Cambios respecto a la Evaluación 3
+
+- Se migró el almacenamiento de tokens de `AsyncStorage` a `expo-secure-store` para mayor seguridad (los tokens JWT ahora se almacenan en el keystore del sistema operativo, no en el almacenamiento general de la app)
+- Se eliminó la dependencia de `@react-native-async-storage/async-storage` para el manejo de tokens
+- Se implementó `AuthContext` con `AuthProvider` y hook `useAuth()` para gestionar el estado de autenticación de forma reactiva
+- El token ahora fluye desde `AuthContext` hasta `apiService` sin pasar por los componentes
+- Los hooks `useTransactions` y `useCategories` obtienen el token internamente a través de `apiRequest`, que lee de `SecureStore`
+- Ninguna pantalla o componente importa directamente `fetch`, `SecureStore` ni `apiService`
+
+### Arquitectura de autenticación
+
+```
+contexts/AuthContext.tsx
+├── AuthProvider: Provee estado de auth (user, isAuthenticated, isLoading)
+├── useAuth(): Hook para consumir el contexto
+├── login(): Guarda tokens en SecureStore y actualiza estado
+├── register(): Guarda tokens en SecureStore y actualiza estado
+└── logout(): Limpia tokens de SecureStore y resetea estado
+
+lib/auth.ts
+└── Funciones de bajo nivel: saveTokens, getAccessToken, clearTokens (SecureStore)
+
+lib/api.ts
+└── apiRequest/apiUpload: Lee token de SecureStore, agrega header Authorization
+```
 
 ## Cambios respecto a la Evaluación 2
 

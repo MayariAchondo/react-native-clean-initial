@@ -6,6 +6,7 @@ import { useLocation } from '@/hooks/useLocation';
 import { useTransactionForm } from '@/hooks/useTransactionForm';
 import { useTransactions } from '@/hooks/useTransactions';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -20,18 +21,31 @@ import {
 } from 'react-native';
 
 export default function CreateTransactionScreen() {
-  const { addTransaction } = useTransactions();
+  const { addTransaction, uploadReceipt } = useTransactions();
   const { categories } = useCategories();
   const img = useImagePicker();
   const loc = useLocation();
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const form = useTransactionForm({
     mode: 'create',
     onSubmit: async (data) => {
+      setUploadError(null);
+      let receiptUrl: string | undefined;
+      if (img.imageUri) {
+        try {
+          receiptUrl = await uploadReceipt(img.imageUri);
+        } catch {
+          setUploadError('Error al subir la imagen');
+          return;
+        }
+      }
       await addTransaction({
         ...data,
-        photoUri: img.imageUri ?? undefined,
-        location: loc.location ?? undefined,
+        categoryId: data.categoryId,
+        receiptUrl,
+        latitude: loc.location?.latitude,
+        longitude: loc.location?.longitude,
       });
       router.back();
     },
@@ -58,6 +72,7 @@ export default function CreateTransactionScreen() {
             placeholderTextColor={colors.muted}
             value={form.amount}
             onChangeText={form.setAmount}
+            keyboardType="numeric"
           />
           {form.errors.amount ? (
             <Text style={styles.errorLabel}>{form.errors.amount}</Text>
@@ -104,9 +119,12 @@ export default function CreateTransactionScreen() {
               value: cat.id,
             }))}
             value={form.categoryId}
-            onChange={form.setCategoryId}
+            onChange={(val) => form.setCategoryId(typeof val === 'string' ? Number(val) : val)}
             placeholder="Seleccionar categoría..."
           />
+          {form.errors.categoryId ? (
+            <Text style={styles.errorLabel}>{form.errors.categoryId}</Text>
+          ) : null}
 
           <Text style={styles.sectionTitle}>Comprobante</Text>
           <View style={styles.photoRow}>
@@ -119,6 +137,9 @@ export default function CreateTransactionScreen() {
           </View>
           {img.permissionError ? (
             <Text style={styles.errorMessage}>{img.permissionError}</Text>
+          ) : null}
+          {uploadError ? (
+            <Text style={styles.errorMessage}>{uploadError}</Text>
           ) : null}
           {img.imageUri ? (
             <View>
@@ -201,22 +222,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     marginBottom: 8,
   },
-  inputMultiline: { minHeight: 120, textAlignVertical: 'top' },
   typeRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   typeOption: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     padding: 10,
     borderRadius: 6,
   },
   typeSelected: {
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: colors.tint,
     padding: 10,
     borderRadius: 6,
-    backgroundColor: '#eee',
+    backgroundColor: colors.tint + '20',
   },
-  label: { fontSize: 16, marginBottom: 8 },
   inputError: { borderColor: colors.danger },
   errorLabel: { fontSize: 12, color: colors.danger, marginBottom: 8 },
   photoRow: { flexDirection: 'row', gap: 12, marginBottom: 8 },

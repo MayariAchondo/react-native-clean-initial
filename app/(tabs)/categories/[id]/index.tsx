@@ -16,6 +16,7 @@ import { useCallback } from 'react';
 export default function CategoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { categories, deleteCategory, reload } = useCategories();
+  const categoryId = Number(id);
 
   useFocusEffect(
     useCallback(() => {
@@ -23,7 +24,7 @@ export default function CategoryDetailScreen() {
     }, [reload]),
   );
 
-  const category = categories.find((n) => n.id === id);
+  const category = categories.find((n) => n.id === categoryId);
 
   if (!category) {
     return (
@@ -41,7 +42,7 @@ export default function CategoryDetailScreen() {
   const handleEliminar = () => {
     if (Platform.OS === 'web') {
       if (window.confirm('¿Estás seguro?')) {
-        deleteCategory(id!).then(() => router.back());
+        deleteCategory(categoryId).then(() => router.back());
       }
     } else {
       Alert.alert('Eliminar categoría', '¿Estás seguro?', [
@@ -50,7 +51,7 @@ export default function CategoryDetailScreen() {
           text: 'Eliminar',
           style: 'destructive',
           onPress: async () => {
-            await deleteCategory(id!);
+            await deleteCategory(categoryId);
             router.back();
           },
         },
