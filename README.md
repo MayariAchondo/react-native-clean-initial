@@ -9,15 +9,14 @@ Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos,
 
 ## Tecnologías utilizadas
 
-- React Native + Expo
+- React Native + Expo SDK 54
 - TypeScript
-- Expo Router (navegación)
-- AsyncStorage (persistencia)
-- Zod (validación)
-- Expo Crypto (generación segura de UUIDs)
+- Expo Router (navegación basada en archivos)
+- expo-secure-store (almacenamiento seguro de tokens JWT)
+- Zod v4 (validación de formularios)
 - Expo Image Picker (cámara y galería)
 - Expo Location (GPS)
-- Expo Secure Store (almacenamiento seguro de tokens)
+- API REST con JWT (Hono + Prisma + PostgreSQL en Render)
 
 ## Requisitos previos
 
@@ -44,38 +43,53 @@ Aplicación móvil desarrollada con React Native + Expo para gestionar ingresos,
 
 - Email: admin@cashi.com
 - Contraseña: 123456
+- API: https://cashi-app.onrender.com
 
 ## Estructura del proyecto
 
+```
 app/
-index.tsx → Pantalla de login
-register.tsx → Pantalla de registro
-(tabs)/
-\_layout.tsx → Navegación centralizada con tabs (Balance, Categorías, Transacciones, Perfil)
+  index.tsx              → Pantalla de login
+  register.tsx           → Pantalla de registro
+  (tabs)/
+    _layout.tsx          → Tabs: Balance, Categorías, Transacciones, Perfil
+    index.tsx            → Redirect a transacciones
+    balance.tsx          → Pantalla de balance
+    categories/
+      index.tsx          → Lista de categorías
+      create.tsx         → Crear categoría
+      [id]/index.tsx     → Detalle/editar categoría
+    transactions/
+      index.tsx          → Lista de transacciones
+      create.tsx         → Crear transacción
+      [id]/index.tsx     → Detalle de transacción
+      [id]/edit.tsx      → Editar transacción
+    profile.tsx          → Perfil y logout
 
 contexts/
-AuthContext.tsx → Contexto de autenticación (AuthProvider, useAuth)
+  AuthContext.tsx         → AuthProvider, useAuth (login/register/logout)
 
 hooks/
-useLogin.ts → Lógica de login (usa useAuth)
-useTransactions.ts → Lógica y persistencia de transacciones
-useCategories.ts → Lógica y persistencia de categorías
-useTransactionForm.ts → Validación del formulario de transacción
-useCategoryForm.ts → Validación del formulario de categoría
-useImagePicker.ts → Acceso a cámara/galería y manejo de permisos
-useLocation.ts → GPS y manejo de permisos
+  useLogin.ts            → Lógica de login (usa useAuth)
+  useTransactions.ts     → CRUD transacciones + upload + balance
+  useCategories.ts       → CRUD categorías
+  useTransactionForm.ts  → Validación Zod de formulario
+  useCategoryForm.ts     → Validación Zod de formulario
+  useImagePicker.ts      → Cámara/galería + permisos
+  useLocation.ts         → GPS + permisos
 
 lib/
-auth.ts → Funciones de autenticación (SecureStore)
-api.ts → Cliente HTTP centralizado (apiRequest, apiUpload)
+  auth.ts                → SecureStore/localStorage (platform-aware)
+  api.ts                 → apiRequest/apiUpload (fetch centralizado, auto-refresh 401)
 
 schemas/
-category.schema.ts → Esquemas de validación Zod para categorías
-transaction.schema.ts → Esquemas de validación Zod para transacciones
+  category.schema.ts     → Zod schemas para categorías
+  transaction.schema.ts  → Zod schemas para transacciones
 
 types/
-category.ts → Interfaces TypeScript (Category)
-transaction.ts → Interfaces TypeScript (Transaction)
+  category.ts            → Interfaces TypeScript
+  transaction.ts         → Interfaces TypeScript
+```
 
 ## Problemas y soluciones encontrados
 
@@ -105,29 +119,101 @@ Solución: usar `as any` en las rutas dinámicas para evitar el error sin compli
 
 ## Cambios respecto a la Evaluación 3
 
-- Se migró el almacenamiento de tokens de `AsyncStorage` a `expo-secure-store` para mayor seguridad (los tokens JWT ahora se almacenan en el keystore del sistema operativo, no en el almacenamiento general de la app)
-- Se eliminó la dependencia de `@react-native-async-storage/async-storage` para el manejo de tokens
-- Se implementó `AuthContext` con `AuthProvider` y hook `useAuth()` para gestionar el estado de autenticación de forma reactiva
-- El token ahora fluye desde `AuthContext` hasta `apiService` sin pasar por los componentes
-- Los hooks `useTransactions` y `useCategories` obtienen el token internamente a través de `apiRequest`, que lee de `SecureStore`
-- Ninguna pantalla o componente importa directamente `fetch`, `SecureStore` ni `apiService`
+### API consumida
 
-### Arquitectura de autenticación
+- **URL del backend:** `https://cashi-app.onrender.com`
+- **Stack del backend:** Hono + Prisma + PostgreSQL (desarrollado por el equipo de Web II)
+
+### Endpoints implementados
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| POST | /auth/register | ❌ | Registro de usuario |
+| POST | /auth/login | ❌ | Login, devuelve accessToken + refreshToken |
+| POST | /auth/refresh | ❌ | Renovación de token (rotación) |
+| POST | /auth/logout | ✅ | Cierre de sesión |
+| GET | /transactions | ✅ | Lista transacciones del usuario |
+| GET | /transactions/:id | ✅ | Detalle de transacción |
+| POST | /transactions | ✅ | Crear transacción |
+| PATCH | /transactions/:id | ✅ | Editar transacción |
+| DELETE | /transactions/:id | ✅ | Eliminar transacción |
+| GET | /transactions/balance | ✅ | Balance del usuario (servidor) |
+| POST | /transactions/upload | ✅ | Subir foto, devuelve receiptUrl |
+| GET | /categories | ✅ | Listar categorías |
+
+### Flujo de autenticación
 
 ```
-contexts/AuthContext.tsx
-├── AuthProvider: Provee estado de auth (user, isAuthenticated, isLoading)
-├── useAuth(): Hook para consumir el contexto
-├── login(): Guarda tokens en SecureStore y actualiza estado
-├── register(): Guarda tokens en SecureStore y actualiza estado
-└── logout(): Limpia tokens de SecureStore y resetea estado
-
-lib/auth.ts
-└── Funciones de bajo nivel: saveTokens, getAccessToken, clearTokens (SecureStore)
-
-lib/api.ts
-└── apiRequest/apiUpload: Lee token de SecureStore, agrega header Authorization
+1. Login/Register → Backend devuelve accessToken (15min) + refreshToken (30d)
+2. Ambos tokens se guardan en expo-secure-store (native) o localStorage (web)
+3. Cada request incluye header Authorization: Bearer <accessToken>
+4. Si el backend responde 401 → se llama POST /auth/refresh con el refreshToken
+5. El backend valida el refreshToken, emite un nuevo par de tokens, y elimina el anterior (rotación)
+6. La request original se reintenta con el nuevo accessToken
+7. Si el refresh falla → se limpian los tokens y el usuario vuelve al login
 ```
+
+### Plataforma-aware: SecureStore vs localStorage
+
+`lib/auth.ts` usa `Platform.OS` para decidir dónde guardar tokens:
+
+- **Native (iOS/Android):** `expo-secure-store` — almacena en el Keychain/Keystore del SO
+- **Web:** `localStorage` — AsyncStorage no funciona en web, y expo-secure-store tiene soporte limitado
+
+Esto permite que la app funcione tanto en Expo Go (web) como en builds nativos.
+
+### Flujo de subida de foto (dos pasos)
+
+```
+1. Usuario selecciona foto → se obtiene URI local
+2. Se crea FormData con la foto (campo "receipt")
+3. Se llama POST /transactions/upload → devuelve { receiptUrl: string }
+4. La receiptUrl se envía en el body al crear/editar la transacción
+5. Si no hay foto, el campo se omite (opcional en la API)
+```
+
+En web, se convierte el URI a Blob antes de agregarlo al FormData (requisito del navegador).
+
+### Manejo de errores
+
+| Tipo de error | Mensaje mostrado |
+|---------------|------------------|
+| Sin conexión a internet | "Error de conexión" |
+| Error HTTP del servidor | Mensaje del body.error del backend |
+| Credenciales incorrectas | "Credenciales incorrectas" |
+| Email ya registrado | "El email ya está registrado" |
+
+### Arquitectura de capas
+
+```
+Pantalla → Hook → apiRequest → lib/api.ts → fetch + SecureStore
+                          ↓
+                   contexts/AuthContext.tsx
+                          ↓
+                   lib/auth.ts (SecureStore/localStorage)
+```
+
+- **Ninguna pantalla o componente** importa `fetch`, `SecureStore` ni `apiService`
+- El token fluye desde `AuthContext` → `apiRequest` → headers HTTP sin pasar por componentes
+- Los hooks (`useTransactions`, `useCategories`) obtienen el token internamente
+
+### Balance desde el servidor
+
+El balance se obtiene de `GET /transactions/balance` (endpoint del backend). El hook `useTransactions` también calcula un balance local como fallback si el endpoint falla.
+
+### Cambios en hooks
+
+- `useTransactions`: CRUD contra API, upload de fotos, balance desde servidor
+- `useCategories`: CRUD contra API
+- `useLogin`: Manejo de formulario + llamada a `useAuth().login()`
+- `useTransactionForm`: Validación Zod + submit
+- `useCategoryForm`: Validación Zod + submit
+- Todas las funciones CRUD envueltas en `useCallback([])` para estabilidad de referencias
+
+### Dependencias nuevas (respecto a Eval 3)
+
+- `expo-secure-store` — almacenamiento seguro de tokens
+- Se eliminó `@react-native-async-storage/async-storage` del manejo de tokens
 
 ## Cambios respecto a la Evaluación 2
 
@@ -139,52 +225,10 @@ Se instalaron las dependencias `expo-image-picker` y `expo-location`.
 
 ## Uso de IA
 
-- **OpenCode (plan - explicativo):** Se utilizó OpenCode en modo plan para analizar el código existente, generar el plan de trabajo detallado y explicar la lógica de cada cambio antes de implementarlo.
-- **Claude (Anthropic):** El plan y el código generado fueron revisados con Claude para verificar coherencia, buenas prácticas y correcto manejo de permisos y hooks.
-
-### Guía lógica seguida (Evaluación 2)
-
-El proceso de trabajo con IA se organizó en estas etapas:
-
-**1. Planificación antes de codear**
-Antes de escribir una línea, se le pidió a Claude que ordenara los commits necesarios en una secuencia lógica. Esto permitió tener un mapa de ruta claro: primero tipos, luego hooks, luego pantallas.
-
-**2. Un commit a la vez**
-Se trabajó commit por commit. Claude explicaba cada línea de código y cada decisión antes de avanzar al siguiente.
-
-**3. Correcciones en el momento**
-Cuando aparecía un error, se pegaba el mensaje exacto del error y Claude lo corregía explicando qué había fallado y por qué.
-
-**4. Código austero y novato**
-Se le pidió explícitamente a Claude que el código fuera simple y fácil de entender, evitando abstracciones innecesarias. Esto fue importante para poder explicar el código en el video de entrega.
-
-**5. Comprensión del código**
-Cada bloque de código fue acompañado de una explicación en español de qué hace cada parte, para poder defenderlo en el video sin depender de memorizar.
-
-**6. Tabs extras aparecían en la barra de navegación**
-Las rutas dinámicas `category/[id]` y `transaction/[id]` aparecían como tabs en la barra inferior.
-Solución: registrarlas en `_layout.tsx` con `href: null` para ocultarlas.
-
-**7. Categorías no aparecían en el formulario de transacción**
-Al abrir el formulario de transacción, la lista de categorías aparecía vacía aunque existían categorías creadas.
-Solución: agregar `useFocusEffect` en el formulario para recargar las categorías cada vez que la pantalla recibe el foco.
-
-**8. Formulario de transacción se quedaba pegado**
-Al agregar `loadCategories` como dependencia del `useCallback`, se generaba un loop infinito que congelaba la pantalla.
-Solución: usar array vacío `[]` en las dependencias del `useCallback` para que solo se ejecute al recibir el foco.
-
-**10. Al refrescar en el navegador vuelve al login**
-Esto ocurre porque la app no guarda la sesión en memoria entre recargas.
-Solución: no es un bug real, en un celular real no ocurre porque la app no se refresca.
-
-**11. SafeAreaView y KeyboardAvoidingView faltaban en todas las pantallas**
-El contenido quedaba tapado por el notch o la barra de estado en celulares, y el teclado tapaba los inputs al escribir.
-Solución: agregar SafeAreaView en todas las pantallas y KeyboardAvoidingView en las pantallas con formularios (login, categoría, transacción).
-
-**12. Estilos declarados dentro de la función**
-Al agregar SafeAreaView, los estilos quedaron dentro del bloque return en vez de fuera de la función, causando errores de "variable usada antes de ser declarada".
-Solución: asegurarse de que StyleSheet.create() siempre esté fuera de la función del componente.
+- **OpenCode (asistente de desarrollo):** Se utilizó OpenCode para analizar el código existente, generar planes de trabajo, implementar la integración con el backend, diagnosticar bugs (loops infinitos, archivos no encontrados) y refactorizar hooks.
+- **Claude (Anthropic):** Se utilizó para revisar decisiones de arquitectura, verificar coherencia del código y generar documentación.
 
 ### Herramientas usadas
 
-- Claude (claude.ai) — generación y corrección de código, explicaciones, README
+- OpenCode — asistente de código, debugging, refactoring
+- Claude (claude.ai) — revisión de arquitectura, explicaciones
